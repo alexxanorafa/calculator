@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+  <!-- Configuração para o logback-access -->
+  <appender name="ACCESS" class="ch.qos.logback.access.jetty.RequestLogImpl">
+    <file>${LOG_PATH}/access.log</file>
+    <immediateFlush>true</immediateFlush>
+    <append>true</append>
+    <encoder>
+      <pattern>%{X-B3-TraceId} %h %l %u %t "%r" %s %b "%{Referer}i" "%{User-Agent}i"</pattern>
+    </encoder>
+  </appender>
+
+  <logger name="org.springframework.amqp.rabbit.connection.CachingConnectionFactory" level="DEBUG"/>
+
+  <!-- Configuração para o logback -->
+  <springProperty scope="context" name="applicationName" source="spring.application.name"/>
+  <property name="LOG_PATH" value="./logs" />
+
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} %-5level ${applicationName:-} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOG_PATH}/${applicationName:-}.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_PATH}/${applicationName:-}-%d{yyyy-MM-dd}.log</fileNamePattern>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} %-5level ${applicationName:-} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <logger name="com.example" level="INFO"/>
+  
+  <!-- Configuração para identificar cada requisição com um identificador único -->
+  <appender name="REQUESTS" class="ch.qos.logback.classic.AsyncAppender">
+    <appender-ref ref="FILE"/>
+  </appender>
+
+  <springProperty scope="context" name="app.name" source="spring.application.name"/>
+
+  <appender name="ASYNC_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
+    <queueSize>512</queueSize>
+    <appender-ref ref="CONSOLE"/>
+  </appender>
+
+  <springProfile name="dev">
+    <root level="INFO">
+      <appender-ref ref="CONSOLE" />
+    </root>
+  </springProfile>
+
+  <springProfile name="!dev">
+    <root level="INFO">
+      <appender-ref ref="FILE" />
+      <appender-ref ref="REQUESTS" />
+    </root>
+  </springProfile>
+
+  <!-- Configuração para propagar o identificador único da requisição via MDC -->
+  <encoder>
+    <pattern>%d{HH:mm:ss.SSS} %-5level [%X{X-B3-TraceId:-}] [%X{X-B3-SpanId:-}] %logger{36} - %msg%n</pattern>
+  </encoder>
+</configuration>
