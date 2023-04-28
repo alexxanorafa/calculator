@@ -21,27 +21,17 @@ dependencies {
     implementation 'net.logstash.logback:logstash-logback-encoder:6.6'
     implementation 'org.springframework.boot:spring-boot-starter-log4j2'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    implementation 'ch.qos.logback:logback-classic:1.2.3'
 }
 
 test {
     useJUnitPlatform()
 }
 
-bootRun {
-    systemProperties = System.properties
-}
-
 // Logback configuration
-configurations {
-    logback
-}
-
-dependencies {
-    logback 'ch.qos.logback:logback-classic:1.2.3'
-}
-
 def logbackConfigFile = 'src/main/resources/logback-spring.xml'
 bootRun {
-    systemProperties = System.properties
-    jvmArgs = ["-Dlogback.configurationFile=${logbackConfigFile}"]
+    systemProperties['LOG_PATH'] = './logs'
+    systemProperties['spring.profiles.active'] = 'dev'
+    jvmArgs = ['-Dlogback.configurationFile=./src/main/resources/logback-spring.xml']
 }
